@@ -41,3 +41,18 @@ Every finding must pass 9 questions before being saved:
 - NEVER test out-of-scope targets
 - ALWAYS verify findings with concrete evidence before saving
 - Theoretical findings without proof are automatically rejected
+
+## MCP Tools
+
+### bounty-platforms
+
+- `sync_program(platform, slug)` — fetch scope + policy, save to scope.yaml
+- `list_programs(platform)` — list active programs
+- `get_hacktivity(platform, slug)` — recent public reports
+- `check_scope(url, engagement_id)` — check if URL is in scope
+
+### writeup-search
+
+- `search_writeups(query, platform)` — search writeups by query
+- `get_writeup(url)` — fetch writeup content
+- `similar_findings(vuln_type)` — find similar findings by vuln type

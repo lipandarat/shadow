@@ -1,6 +1,9 @@
 # tests/test_mcp_bundle.py
 """MCP bundle drift test — ensures tool definitions are consistent."""
 
+import os
+import re
+
 import pytest
 from shadow.mcp.server import ShadowMCPServer
 
@@ -79,3 +82,41 @@ class TestMCPBundle:
         expected = set(WRITEUP_SEARCH_TOOLS)
         extra = registered - expected
         assert not extra, f"Unexpected tools: {extra}"
+
+
+def _parse_tools_from_claude_md() -> dict[str, list[str]]:
+    """Parse MCP tool names from claude/CLAUDE.md."""
+    claude_md = os.path.join(os.path.dirname(__file__), "..", "claude", "CLAUDE.md")
+    if not os.path.exists(claude_md):
+        return {}
+    with open(claude_md, encoding="utf-8") as f:
+        content = f.read()
+    bounty_tools = re.findall(r"`(sync_program|list_programs|get_hacktivity|check_scope)[\(`]", content)
+    writeup_tools = re.findall(r"`(search_writeups|get_writeup|similar_findings)[\(`]", content)
+    return {
+        "bounty-platforms": list(dict.fromkeys(bounty_tools)),
+        "writeup-search": list(dict.fromkeys(writeup_tools)),
+    }
+
+
+class TestMCPBundleClaudeMD:
+    def test_claude_md_exists(self):
+        """claude/CLAUDE.md must exist for bundle drift detection."""
+        claude_md = os.path.join(
+            os.path.dirname(__file__), "..", "claude", "CLAUDE.md"
+        )
+        assert os.path.exists(claude_md), "claude/CLAUDE.md not found"
+
+    def test_bounty_tools_in_claude_md(self):
+        """All bounty-platforms tools must be mentioned in claude/CLAUDE.md."""
+        tools = _parse_tools_from_claude_md()
+        for tool in BOUNTY_PLATFORM_TOOLS:
+            assert tool in tools.get("bounty-platforms", []), \
+                f"Tool '{tool}' not found in claude/CLAUDE.md"
+
+    def test_writeup_tools_in_claude_md(self):
+        """All writeup-search tools must be mentioned in claude/CLAUDE.md."""
+        tools = _parse_tools_from_claude_md()
+        for tool in WRITEUP_SEARCH_TOOLS:
+            assert tool in tools.get("writeup-search", []), \
+                f"Tool '{tool}' not found in claude/CLAUDE.md"
