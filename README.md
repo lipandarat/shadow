@@ -1,6 +1,8 @@
 # Shadow — Bug Bounty Hunting Assistant
 
-Shadow adalah asisten bug bounty berbasis Python yang berperilaku seperti pentester profesional. Sistem menjalankan recon, menemukan celah, memvalidasi temuan secara ketat (bukan teori), membangun exploit chain, menulis laporan, dan belajar dari pekerjaan sebelumnya.
+Shadow adalah asisten bug bounty berbasis Python yang terintegrasi dengan **Claude Code**. Sistem berperilaku seperti pentester profesional: menjalankan recon, menemukan celah, memvalidasi temuan secara ketat (bukan teori), membangun exploit chain, menulis laporan, dan belajar dari pekerjaan sebelumnya.
+
+**Shadow berjalan di dalam Claude Code** — bukan di terminal langsung. Anda berinteraksi dengan Shadow melalui slash commands (`/new`, `/hunt`, dll) dan Claude Code menggunakan MCP servers serta agen Python di belakang layar.
 
 ---
 
@@ -9,13 +11,13 @@ Shadow adalah asisten bug bounty berbasis Python yang berperilaku seperti pentes
 1. [Persyaratan](#persyaratan)
 2. [Instalasi](#instalasi)
 3. [Konfigurasi API Key](#konfigurasi-api-key)
-4. [Alur Kerja Dasar](#alur-kerja-dasar)
-5. [Referensi Perintah](#referensi-perintah)
-6. [Slash Commands di Claude Code](#slash-commands-di-claude-code)
-7. [MCP Servers](#mcp-servers)
-8. [Validation Gate (9 Pertanyaan)](#validation-gate-9-pertanyaan)
-9. [Alat Keamanan yang Didukung](#alat-keamanan-yang-didukung)
-10. [Struktur Data](#struktur-data)
+4. [Cara Penggunaan di Claude Code](#cara-penggunaan-di-claude-code)
+5. [Slash Commands](#slash-commands)
+6. [MCP Servers](#mcp-servers)
+7. [Validation Gate (9 Pertanyaan)](#validation-gate-9-pertanyaan)
+8. [Alat Keamanan yang Didukung](#alat-keamanan-yang-didukung)
+9. [Struktur Data](#struktur-data)
+10. [CLI Utility Commands](#cli-utility-commands)
 11. [Pengembangan](#pengembangan)
 
 ---
@@ -23,7 +25,7 @@ Shadow adalah asisten bug bounty berbasis Python yang berperilaku seperti pentes
 ## Persyaratan
 
 - Python 3.11 atau lebih baru
-- Claude Code (untuk slash commands dan MCP integration)
+- **Claude Code** (wajib — Shadow berjalan di dalam Claude Code)
 - Git
 
 Alat keamanan opsional (sistem auto-detect yang tersedia):
@@ -36,11 +38,11 @@ nmap, ffuf, nuclei, httpx, subfinder, gau, waybackurls, sqlmap, dalfox, interact
 
 ## Instalasi
 
-### Langkah 1: Clone atau download proyek
+### Langkah 1: Clone proyek
 
 ```bash
 cd ~
-git clone <repo-url> shadow
+git clone https://github.com/lipandarat/shadow.git
 cd shadow
 ```
 
@@ -79,11 +81,9 @@ Output yang diharapkan:
 Overall: PASS
 ```
 
-### Langkah 4: Cek versi
+### Langkah 4: Buka Claude Code
 
-```bash
-shadow --version
-```
+Buka Claude Code di direktori proyek Anda. Shadow sudah siap digunakan via slash commands.
 
 ---
 
@@ -114,218 +114,107 @@ Untuk mendapatkan API key:
 
 ---
 
-## Alur Kerja Dasar
+## Cara Penggunaan di Claude Code
 
-### 1. Buat engagement baru
+Shadow digunakan **di dalam Claude Code** melalui slash commands. Buka Claude Code dan ketik slash command untuk memulai.
 
-```bash
-shadow new hackerone tesla
+### Alur kerja tipikal:
+
+**1. Buat engagement baru**
+
+Di Claude Code, ketik:
+```
+/new hackerone tesla
 ```
 
-Membuat workspace di `~/.shadow/engagements/hackerone-tesla-YYYYMMDD/` dengan:
+Claude Code akan membuat workspace di `~/.shadow/engagements/hackerone-tesla-YYYYMMDD/` berisi:
 - `scope.yaml` — domain in-scope
 - `brain.md` — memori dan catatan
 - `findings/` — temuan yang tervalidasi
 - `endpoints.jsonl` — endpoint yang ditemukan
 - `events.jsonl` — audit log semua aksi
+- `session.jsonl` — state untuk resume
 
-### 2. Sync scope dari platform
+**2. Sync scope dari platform**
 
-```bash
-shadow sync hackerone tesla
+```
+/sync hackerone tesla
 ```
 
 Mengambil scope, policy, dan hacktivity terbaru dari HackerOne. Membutuhkan API key di config.
 
-### 3. Jalankan hunt
+**3. Jalankan hunt**
 
-```bash
-# Hunt semua vuln class
-shadow hunt https://tesla.com
-
-# Hunt fokus pada SQL injection
-shadow hunt https://tesla.com --vuln-class sqli
-
-# Lanjutkan hunt yang terhenti
-shadow hunt https://tesla.com --vuln-class sqli --resume
+```
+/hunt https://tesla.com --vuln-class sqli
 ```
 
-Hunt cycle:
-1. Scope check — berhenti jika target out-of-scope
-2. OPSEC init — set rate limit, randomize headers
-3. Tool detection — deteksi tool yang tersedia
-4. Recon — kumpulkan endpoints
+Claude Code akan:
+1. Cek scope — berhenti jika target out-of-scope
+2. Init OPSEC — set rate limit, randomize headers
+3. Deteksi tool yang tersedia
+4. Jalankan recon — kumpulkan endpoints
 5. Fingerprint target — deteksi framework, DB, WAF
 6. Generate adaptive payloads — bukan wordlist statis
-7. Probe dengan payloads
-8. Setiap anomali → validation gate (9 pertanyaan)
-9. PASS → simpan ke `findings/`
-10. FAIL → catat dead end di `brain.md`
+7. Probe dengan payloads dan tool yang tersedia
+8. Setup OOB canary untuk blind vulnerabilities
+9. Setiap anomali → validation gate (9 pertanyaan)
+10. PASS → simpan ke `findings/`
+11. FAIL → catat dead end di `brain.md`
 
-### 4. Validasi finding manual
+**4. Validasi finding**
 
-```bash
-shadow validate F001
+```
+/validate F001
 ```
 
-Menjalankan 9-question gate secara manual pada finding yang sudah ada.
+Menjalankan 9-question gate pada finding F001. Menampilkan PASS/FAIL per pertanyaan.
 
-### 5. Build exploit chain
+**5. Build exploit chain**
 
-```bash
-shadow chain F001
+```
+/chain F001
 ```
 
-Mencari findings lain yang berhubungan dengan F001 dan membangun exploit chain dengan severity gabungan.
+Mencari findings lain yang berhubungan dan membangun exploit chain dengan severity gabungan.
 
-### 6. Cek duplikat
+**6. Cek duplikat**
 
-```bash
-shadow dupcheck F001
+```
+/dupcheck F001
 ```
 
 Memeriksa apakah F001 adalah duplikat dari finding lokal atau hacktivity platform.
 
-### 7. Generate laporan
+**7. Generate laporan**
 
-```bash
-shadow report
+```
+/report
 ```
 
-Menghasilkan laporan Markdown draft di `~/.shadow/engagements/<engagement>/report.md`. **Tidak pernah auto-submit.**
+Menghasilkan laporan Markdown draft. **Tidak pernah auto-submit.** Claude Code akan menampilkan draft untuk review sebelum submission.
 
-### 8. Catat hasil dari platform
+**8. Catat hasil dari platform**
 
-```bash
-# Finding diterima dengan bounty $500
-shadow learn F001 accepted --bounty 500 --vuln-type sqli
-
-# Finding duplikat
-shadow learn F001 duplicate
-
-# Finding informational
-shadow learn F001 informational
+```
+/learn F001 accepted --bounty 500 --vuln-type sqli
 ```
 
 Status yang valid: `accepted`, `duplicate`, `informational`, `not_applicable`
 
-### 9. Kelola OOB listener
+**9. Kelola OOB listener**
 
-```bash
-# Mulai listener (untuk blind vulnerabilities)
-shadow oob start
-
-# Cek hit terbaru
-shadow oob check
-
-# Hentikan listener
-shadow oob stop
+```
+/oob start
+/oob check
+/oob stop
 ```
 
 ---
 
-## Referensi Perintah
+## Slash Commands
 
-### `shadow new`
-
-```
-shadow new <platform> <program>
-
-Contoh:
-  shadow new hackerone tesla
-  shadow new bugcrowd uber
-```
-
-### `shadow sync`
-
-```
-shadow sync <platform> <program>
-
-Contoh:
-  shadow sync hackerone tesla
-```
-
-### `shadow hunt`
-
-```
-shadow hunt <target> [--vuln-class CLASS] [--resume]
-
-Vuln class yang didukung:
-  sqli, xss, ssrf, ssti, lfi, rce, idor, xxe, cmdi
-
-Contoh:
-  shadow hunt https://tesla.com
-  shadow hunt https://tesla.com --vuln-class sqli
-  shadow hunt https://tesla.com --vuln-class xss --resume
-```
-
-### `shadow validate`
-
-```
-shadow validate <finding_id>
-
-Contoh:
-  shadow validate F001
-```
-
-### `shadow chain`
-
-```
-shadow chain <finding_id>
-
-Contoh:
-  shadow chain F001
-```
-
-### `shadow report`
-
-```
-shadow report [--format md|yaml]
-
-Contoh:
-  shadow report
-  shadow report --format yaml
-```
-
-### `shadow dupcheck`
-
-```
-shadow dupcheck <finding_id>
-
-Contoh:
-  shadow dupcheck F001
-```
-
-### `shadow learn`
-
-```
-shadow learn <finding_id> <status> [--bounty AMOUNT] [--vuln-type TYPE]
-
-Status: accepted, duplicate, informational, not_applicable
-
-Contoh:
-  shadow learn F001 accepted --bounty 500 --vuln-type sqli
-  shadow learn F002 duplicate
-```
-
-### `shadow oob`
-
-```
-shadow oob start|stop|check
-```
-
-### `shadow mcp serve`
-
-```
-shadow mcp serve bounty-platforms [--dry-run]
-shadow mcp serve writeup-search [--dry-run]
-```
-
----
-
-## Slash Commands di Claude Code
-
-Setelah instalasi, slash commands tersedia di Claude Code:
+Semua slash commands tersedia di Claude Code setelah instalasi:
 
 | Command | Fungsi |
 |---------|--------|
@@ -413,9 +302,6 @@ go install github.com/projectdiscovery/interactsh/cmd/interactsh-client@latest
 go install github.com/lc/gau/v2/cmd/gau@latest
 go install github.com/tomnomnom/waybackurls@latest
 
-# Python tools
-pip install sqlmap
-
 # dalfox
 go install github.com/hahwul/dalfox/v2@latest
 ```
@@ -475,12 +361,42 @@ validated_at: 2026-05-19T10:05:00Z
 
 ---
 
+## CLI Utility Commands
+
+Beberapa perintah CLI tersedia untuk setup dan maintenance. **Ini bukan cara utama menggunakan Shadow** — gunakan slash commands di Claude Code untuk hunting.
+
+### Installer
+
+```bash
+python install.py install    # Install Shadow dan konfigurasi Claude Code
+python install.py verify     # Verifikasi semua komponen terpasang
+python install.py render     # Tampilkan konfigurasi aktif
+python install.py uninstall  # Hapus konfigurasi Claude Code
+```
+
+### MCP server dry-run (untuk debugging)
+
+```bash
+python -m shadow.cli.main mcp serve bounty-platforms --dry-run
+python -m shadow.cli.main mcp serve writeup-search --dry-run
+```
+
+### Buat engagement dari terminal
+
+```bash
+shadow new hackerone tesla
+```
+
+Ini satu-satunya CLI command yang berfungsi penuh di terminal. Semua command lain (`hunt`, `validate`, `report`, dll) dirancang untuk dijalankan oleh Claude Code, bukan langsung dari terminal.
+
+---
+
 ## Pengembangan
 
 ### Setup development environment
 
 ```bash
-git clone <repo-url> shadow
+git clone https://github.com/lipandarat/shadow.git
 cd shadow
 pip install -e ".[dev]"
 ```
@@ -494,15 +410,6 @@ pytest tests/test_store.py -v      # satu file
 pytest -k "test_save_finding" -v   # filter nama
 ```
 
-### Installer commands
-
-```bash
-python install.py install    # install + konfigurasi Claude Code
-python install.py verify     # cek semua komponen
-python install.py render     # tampilkan konfigurasi aktif
-python install.py uninstall  # hapus konfigurasi Claude Code
-```
-
 ### Struktur package
 
 ```
@@ -514,7 +421,7 @@ shadow/
 ├── platforms/     # Platform API: hackerone, bugcrowd
 ├── mcp/           # MCP servers untuk Claude Code
 ├── hooks/         # Claude Code PreToolUse hooks
-└── cli/           # CLI entry point dan commands
+└── cli/           # CLI entry point (installer + new command)
 ```
 
 ### Uninstall
