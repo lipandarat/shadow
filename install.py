@@ -201,9 +201,38 @@ def cmd_uninstall(args):
 def _run_verify(quiet=False) -> bool:
     checks = []
 
-    # Check 1: Python import
+    # Check 1: Python imports
     try:
         import shadow
+        import shadow.core.models
+        import shadow.core.store
+        import shadow.core.validate
+        import shadow.core.scope
+        import shadow.core.audit
+        import shadow.core.engagement
+        import shadow.core.cvss
+        import shadow.core.dedup
+        import shadow.core.opsec
+        import shadow.core.session
+        import shadow.core.toolcheck
+        import shadow.core.brain
+        import shadow.core.learn
+        import shadow.agents.recon
+        import shadow.agents.hunt
+        import shadow.agents.validate
+        import shadow.agents.chain
+        import shadow.agents.report
+        import shadow.agents.dupcheck
+        import shadow.agents.learn
+        import shadow.mcp.server
+        import shadow.mcp.bounty_platforms
+        import shadow.mcp.writeup_search
+        import shadow.platforms.base
+        import shadow.platforms.hackerone
+        import shadow.platforms.bugcrowd
+        import shadow.platforms.factory
+        import shadow.hooks.pre_save_check
+        import shadow.hooks.scope_check
         checks.append(("Python package imports", True, ""))
     except ImportError as e:
         checks.append(("Python package imports", False, str(e)))
