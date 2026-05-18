@@ -326,11 +326,32 @@ def _copy_slash_commands():
                     os.path.join(CLAUDE_COMMANDS_DIR, fname)
                 )
 
-    # Copy claude/CLAUDE.md → ~/.claude/CLAUDE.md (only if not exists — don't overwrite)
+    # Merge claude/CLAUDE.md → ~/.claude/CLAUDE.md
+    # If file doesn't exist: copy directly
+    # If file exists but Shadow block not present: append Shadow block
+    # If Shadow block already present: skip (already merged)
     claude_md_src = os.path.join(os.path.dirname(os.path.abspath(__file__)), "claude", "CLAUDE.md")
     claude_md_dst = os.path.join(os.path.expanduser("~"), ".claude", "CLAUDE.md")
-    if os.path.isfile(claude_md_src) and not os.path.exists(claude_md_dst):
-        shutil.copy2(claude_md_src, claude_md_dst)
+    SHADOW_BLOCK_MARKER = "<!-- shadow-assistant managed block -->"
+
+    if os.path.isfile(claude_md_src):
+        with open(claude_md_src, encoding="utf-8") as f:
+            shadow_content = f.read()
+
+        if not os.path.exists(claude_md_dst):
+            # File doesn't exist — write directly
+            with open(claude_md_dst, "w", encoding="utf-8") as f:
+                f.write(SHADOW_BLOCK_MARKER + "\n")
+                f.write(shadow_content)
+        else:
+            # File exists — check if Shadow block already present
+            with open(claude_md_dst, encoding="utf-8") as f:
+                existing = f.read()
+            if SHADOW_BLOCK_MARKER not in existing:
+                # Append Shadow block
+                with open(claude_md_dst, "a", encoding="utf-8") as f:
+                    f.write("\n\n" + SHADOW_BLOCK_MARKER + "\n")
+                    f.write(shadow_content)
 
 
 def _create_shadow_config():
