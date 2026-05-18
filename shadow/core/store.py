@@ -6,6 +6,8 @@ import yaml
 from typing import Optional
 from shadow.core.models import Finding, Evidence, FindingStatus, Severity, Scope
 from shadow.core.validate import ValidationGate
+from shadow.core.cvss import CVSSCalculator
+from shadow.core.dedup import DedupEngine, FingerprintEngine
 
 
 class ValidationFailed(Exception):
@@ -15,11 +17,20 @@ class ValidationFailed(Exception):
         super().__init__(f"Validation failed: {'; '.join(reasons)}")
 
 
+class DuplicateFinding(Exception):
+    """Raised when a finding is a duplicate of an existing finding."""
+    def __init__(self, match: str):
+        self.match = match
+        super().__init__(f"Duplicate finding: matches {match}")
+
+
 class FindingStore:
     def __init__(self, workspace_dir: str):
         self.workspace_dir = workspace_dir
         self.findings_dir = os.path.join(workspace_dir, "findings")
         self._next_id = 1
+        self.audit = None   # set externally if audit logging needed
+        self.brain = None   # set externally if dead end recording needed
 
     def save(self, finding: Finding) -> None:
         """Save a finding to disk. Assigns ID if not set."""
@@ -51,6 +62,41 @@ class FindingStore:
         if not gate_result.passed:
             raise ValidationFailed(gate_result.reasons)
         self.save(finding)
+
+    def save_finding(self, finding: Finding, scope=None) -> None:
+        """Full spec §5 pipeline: gate → dedup → CVSS → fingerprint → write → audit.
+
+        This is the canonical entry point for all agent-generated findings.
+        Raises:
+            ValidationFailed: if gate fails
+            DuplicateFinding: if fingerprint matches existing finding
+        """
+        # Step 1: Validation gate (9 questions)
+        gate_result = ValidationGate.run(finding, scope)
+        if not gate_result.passed:
+            if self.brain is not None:
+                self.brain.record_dead_end(finding, gate_result.reasons)
+            raise ValidationFailed(gate_result.reasons)
+
+        # Step 2: Dedup check
+        fp = FingerprintEngine.compute(finding)
+        finding.fingerprint = fp
+        dedup_engine = DedupEngine(self)
+        dedup_result = dedup_engine.check(finding)
+        if dedup_result.is_duplicate:
+            raise DuplicateFinding(dedup_result.match)
+
+        # Step 3: CVSS calculation
+        score, vector = CVSSCalculator.calculate(finding)
+        finding.cvss_score = score
+        finding.cvss_vector = vector
+
+        # Step 4: Write to disk
+        self.save(finding)
+
+        # Step 5: Audit log
+        if self.audit is not None:
+            self.audit.log("finding_saved", finding_id=finding.id, title=finding.title)
 
     def load(self, finding_id: str) -> Optional[Finding]:
         """Load a finding by ID."""
