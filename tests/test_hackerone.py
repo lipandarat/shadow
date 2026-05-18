@@ -39,20 +39,21 @@ class TestHackerOneAPI:
         assert result.platform == "hackerone"
 
     def test_sync_program_parses_scope(self, api):
-        data = {
+        # First call: program info
+        program_data = {
             "data": {
                 "attributes": {"name": "Tesla", "submission_state": "open"},
-                "relationships": {
-                    "structured_scopes": {
-                        "data": [
-                            {"attributes": {"asset_identifier": "*.tesla.com", "eligible_for_submission": True}},
-                            {"attributes": {"asset_identifier": "admin.tesla.com", "eligible_for_submission": False}},
-                        ]
-                    }
-                },
             }
         }
-        with patch("httpx.get", return_value=mock_response(data)):
+        # Second call: structured scopes
+        scopes_data = {
+            "data": [
+                {"attributes": {"asset_identifier": "*.tesla.com", "eligible_for_submission": True}},
+                {"attributes": {"asset_identifier": "admin.tesla.com", "eligible_for_submission": False}},
+            ]
+        }
+        responses = [mock_response(program_data), mock_response(scopes_data)]
+        with patch("httpx.get", side_effect=responses):
             result = api.sync_program("tesla")
         assert "tesla.com" in result.scope.domains
         assert "admin.tesla.com" in result.scope.excluded

@@ -15,10 +15,32 @@ class HackerOneAPI(BasePlatform):
 
     def sync_program(self, slug: str) -> ProgramInfo:
         self._require_api_key()
-        resp = self._get(f"/programs/{slug}")
+        # Get program info
+        resp = self._get(f"/hackers/programs/{slug}")
         data = resp.get("data", {})
         attrs = data.get("attributes", {})
-        scope = self._parse_scope(data)
+
+        # Get structured scopes from dedicated endpoint
+        scope = ProgramScope()
+        try:
+            scopes_resp = self._get(f"/hackers/programs/{slug}/structured_scopes",
+                                    params={"page[size]": 100})
+            for item in scopes_resp.get("data", []):
+                s_attrs = item.get("attributes", {})
+                asset = s_attrs.get("asset_identifier", "")
+                eligible = s_attrs.get("eligible_for_submission", True)
+                if not asset:
+                    continue
+                if not eligible:
+                    scope.excluded.append(asset)
+                elif asset.startswith("*."):
+                    scope.wildcards.append(asset)
+                    scope.domains.append(asset[2:])
+                else:
+                    scope.domains.append(asset)
+        except Exception:
+            pass
+
         return ProgramInfo(
             slug=slug,
             name=attrs.get("name", slug),
@@ -30,7 +52,7 @@ class HackerOneAPI(BasePlatform):
 
     def list_programs(self) -> list[ProgramInfo]:
         self._require_api_key()
-        resp = self._get("/programs", params={"page[size]": 25})
+        resp = self._get("/hackers/programs", params={"page[size]": 25})
         programs = []
         for item in resp.get("data", []):
             attrs = item.get("attributes", {})
@@ -44,23 +66,29 @@ class HackerOneAPI(BasePlatform):
         return programs
 
     def get_hacktivity(self, slug: str, limit: int = 20) -> list[HacktivityEntry]:
-        resp = self._get("/hacktivity", params={
-            "filter[program][]": slug,
-            "page[size]": limit,
-        })
+        params = {"page[size]": limit}
+        if slug:
+            params["queryString"] = f"disclosed:true AND team:{slug}"
+        else:
+            params["queryString"] = "disclosed:true"
+        resp = self._get("/hackers/hacktivity", params=params)
         entries = []
         for item in resp.get("data", []):
             attrs = item.get("attributes", {})
-            weakness = attrs.get("weakness")
-            vuln_type = weakness.get("name", "unknown") if isinstance(weakness, dict) else "unknown"
+            rels = item.get("relationships", {})
+            # Get program from relationships
+            prog_attrs = rels.get("program", {}).get("data", {}).get("attributes", {})
+            program_handle = prog_attrs.get("handle", slug)
+            # Get vuln type from cwe field
+            vuln_type = attrs.get("cwe") or "unknown"
             entries.append(HacktivityEntry(
                 title=attrs.get("title", ""),
                 url=attrs.get("url", ""),
-                severity=attrs.get("severity_rating", "unknown"),
+                severity=attrs.get("severity_rating") or "unknown",
                 vuln_type=vuln_type,
                 bounty=attrs.get("total_awarded_amount"),
                 disclosed_at=attrs.get("disclosed_at", ""),
-                program=slug,
+                program=program_handle,
             ))
         return entries
 

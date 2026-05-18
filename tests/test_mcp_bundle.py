@@ -85,9 +85,18 @@ class TestMCPBundle:
 
 
 def _parse_tools_from_claude_md() -> dict[str, list[str]]:
-    """Parse MCP tool names from claude/CLAUDE.md."""
-    claude_md = os.path.join(os.path.dirname(__file__), "..", "claude", "CLAUDE.md")
-    if not os.path.exists(claude_md):
+    """Parse MCP tool names from CLAUDE.md (root level)."""
+    # Try root level first (new location), then claude/ subdirectory (old location)
+    candidates = [
+        os.path.join(os.path.dirname(__file__), "..", "CLAUDE.md"),
+        os.path.join(os.path.dirname(__file__), "..", "claude", "CLAUDE.md"),
+    ]
+    claude_md = None
+    for c in candidates:
+        if os.path.exists(c):
+            claude_md = c
+            break
+    if not claude_md:
         return {}
     with open(claude_md, encoding="utf-8") as f:
         content = f.read()
@@ -101,11 +110,13 @@ def _parse_tools_from_claude_md() -> dict[str, list[str]]:
 
 class TestMCPBundleClaudeMD:
     def test_claude_md_exists(self):
-        """claude/CLAUDE.md must exist for bundle drift detection."""
-        claude_md = os.path.join(
-            os.path.dirname(__file__), "..", "claude", "CLAUDE.md"
-        )
-        assert os.path.exists(claude_md), "claude/CLAUDE.md not found"
+        """CLAUDE.md must exist for bundle drift detection."""
+        candidates = [
+            os.path.join(os.path.dirname(__file__), "..", "CLAUDE.md"),
+            os.path.join(os.path.dirname(__file__), "..", "claude", "CLAUDE.md"),
+        ]
+        exists = any(os.path.exists(c) for c in candidates)
+        assert exists, "CLAUDE.md not found in root or claude/ directory"
 
     def test_bounty_tools_in_claude_md(self):
         """All bounty-platforms tools must be mentioned in claude/CLAUDE.md."""
