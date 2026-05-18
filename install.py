@@ -152,6 +152,13 @@ def cmd_render(args):
     else:
         print("  (not found)")
 
+    print("\nCLAUDE.md:")
+    claude_md_path = os.path.join(os.path.expanduser("~"), ".claude", "CLAUDE.md")
+    if os.path.exists(claude_md_path):
+        print(f"  {claude_md_path} (exists)")
+    else:
+        print(f"  {claude_md_path} (not installed)")
+
     print(f"\nShadow Version: 0.1.0")
 
 
@@ -318,6 +325,12 @@ def _copy_slash_commands():
                     os.path.join(commands_src, fname),
                     os.path.join(CLAUDE_COMMANDS_DIR, fname)
                 )
+
+    # Copy claude/CLAUDE.md → ~/.claude/CLAUDE.md (only if not exists — don't overwrite)
+    claude_md_src = os.path.join(os.path.dirname(os.path.abspath(__file__)), "claude", "CLAUDE.md")
+    claude_md_dst = os.path.join(os.path.expanduser("~"), ".claude", "CLAUDE.md")
+    if os.path.isfile(claude_md_src) and not os.path.exists(claude_md_dst):
+        shutil.copy2(claude_md_src, claude_md_dst)
 
 
 def _create_shadow_config():

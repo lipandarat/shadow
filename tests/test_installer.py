@@ -30,6 +30,16 @@ class TestInstaller:
         assert result.returncode == 0
         assert "Shadow Configuration" in result.stdout
 
+    def test_render_shows_claude_md_status(self):
+        """render should show CLAUDE.md status."""
+        result = subprocess.run(
+            [sys.executable, "install.py", "render"],
+            capture_output=True, text=True,
+            cwd=os.path.join(os.path.expanduser("~"), "shadow")
+        )
+        assert result.returncode == 0
+        assert "CLAUDE" in result.stdout
+
     def test_verify_exits_with_code(self):
         result = subprocess.run(
             [sys.executable, "install.py", "verify"],
