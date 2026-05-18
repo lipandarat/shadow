@@ -26,15 +26,13 @@ class ScopeEngine:
             )
 
 
-def require_in_scope(scope_getter: Callable):
+def require_in_scope(scope_getter: Callable, audit=None):
     """
     Decorator factory. scope_getter is a callable that returns the current Scope.
+    audit is an optional AuditLogger instance for logging violations.
 
     Usage:
-        def get_scope():
-            return engagement.scope
-
-        @require_in_scope(get_scope)
+        @require_in_scope(lambda: engagement.scope, audit=audit_logger)
         def run_nuclei(target, templates):
             ...
     """
@@ -42,7 +40,17 @@ def require_in_scope(scope_getter: Callable):
         @wraps(func)
         def wrapper(target, *args, **kwargs):
             scope = scope_getter()
-            ScopeEngine.assert_in_scope(target, scope)
+            if not ScopeEngine.is_in_scope(target, scope):
+                if audit is not None:
+                    audit.log(
+                        "scope_violation_blocked",
+                        target=target,
+                        func=func.__name__,
+                    )
+                raise ScopeViolation(
+                    f"Target '{target}' is not in scope. "
+                    f"Check scope.yaml before testing."
+                )
             return func(target, *args, **kwargs)
         return wrapper
     return decorator
