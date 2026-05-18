@@ -65,10 +65,8 @@ class Finding:
         return False
 
     def to_dict(self) -> dict:
-        d = asdict(self)
-        d["status"] = self.status.value
-        d["severity"] = self.severity.value
-        return d
+        # asdict() handles str, Enum fields correctly (produces string values)
+        return asdict(self)
 
 
 @dataclass
@@ -77,6 +75,9 @@ class ScopeEntry:
     wildcard: bool = False
     include_subdomains: bool = True
     notes: str = ""
+
+    def __post_init__(self):
+        self.domain = self.domain.lstrip(".").lower()
 
     def matches(self, url_or_domain: str) -> bool:
         host = url_or_domain
@@ -98,6 +99,9 @@ class Scope:
     excluded: list[str] = field(default_factory=list)
 
     def matches(self, url_or_domain: str) -> bool:
+        # Check exclusions first
+        if any(ScopeEntry(domain=ex).matches(url_or_domain) for ex in self.excluded):
+            return False
         return any(e.matches(url_or_domain) for e in self.entries)
 
 

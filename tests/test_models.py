@@ -31,6 +31,14 @@ class TestFinding:
         assert d["severity"] == "info"
         assert d["parameter"] == "q"
 
+    def test_to_dict_with_evidence(self):
+        e = Evidence(request="GET / HTTP/1.1", response="200 OK")
+        f = Finding(title="X", vuln_class="xss", target="https://x.com", evidence=e)
+        d = f.to_dict()
+        assert d["evidence"]["request"] == "GET / HTTP/1.1"
+        assert d["evidence"]["response"] == "200 OK"
+        assert d["status"] == "draft"  # str, not enum object
+
     def test_created_at_is_set(self):
         f = Finding(title="X", vuln_class="xss", target="https://x.com")
         assert f.created_at is not None
@@ -55,6 +63,11 @@ class TestScopeEntry:
         s = ScopeEntry(domain="example.com", wildcard=True)
         assert s.matches("anything.example.com")
 
+    def test_scope_entry_strips_leading_dot(self):
+        s = ScopeEntry(domain=".example.com")
+        assert s.domain == "example.com"
+        assert s.matches("example.com")
+
 
 class TestScope:
     def test_matches_any_entry(self):
@@ -66,6 +79,14 @@ class TestScope:
     def test_empty_scope_matches_nothing(self):
         scope = Scope()
         assert not scope.matches("example.com")
+
+    def test_scope_excluded_blocks_match(self):
+        scope = Scope(
+            entries=[ScopeEntry(domain="example.com")],
+            excluded=["admin.example.com"]
+        )
+        assert scope.matches("example.com")
+        assert not scope.matches("admin.example.com")
 
 
 class TestEngagement:
