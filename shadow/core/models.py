@@ -65,8 +65,13 @@ class Finding:
         return False
 
     def to_dict(self) -> dict:
-        # asdict() handles str, Enum fields correctly (produces string values)
-        return asdict(self)
+        d = asdict(self)
+        # asdict() preserves Enum objects; coerce them to plain strings for
+        # safe YAML serialization (yaml.safe_dump / yaml.safe_load roundtrip).
+        for key, val in d.items():
+            if isinstance(val, Enum):
+                d[key] = val.value
+        return d
 
 
 @dataclass
