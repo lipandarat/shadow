@@ -95,3 +95,60 @@ class TestFindingStore:
         store.save(Finding(title="B", vuln_class="xss", target="https://x.com"))
         all_findings = store.load_all()
         assert len(all_findings) == 2
+
+
+class TestFindingStoreGateEnforcement:
+    @pytest.fixture
+    def store(self):
+        with tempfile.TemporaryDirectory() as d:
+            yield FindingStore(d)
+
+    def test_save_validated_rejects_invalid_finding(self, store):
+        """save_validated() must reject findings that fail the gate."""
+        from shadow.core.store import ValidationFailed
+        f = Finding(
+            title="Weak finding",
+            vuln_class="sqli",
+            target="https://x.com",
+            # Missing: reproduction_steps, impact, evidence
+        )
+        with pytest.raises(ValidationFailed):
+            store.save_validated(f)
+
+    def test_save_validated_accepts_valid_finding(self, store):
+        """save_validated() must accept findings that pass the gate."""
+        from shadow.core.models import Evidence
+        f = Finding(
+            title="SQL Injection in /login",
+            vuln_class="sqli",
+            target="https://x.com/login",
+            parameter="username",
+            reproduction_steps=["Send payload", "Observe response"],
+            impact="Authentication bypass — attacker gains admin access",
+            evidence=Evidence(
+                request="POST /login HTTP/1.1\r\nHost: x.com\r\n\r\nusername=admin'--",
+                response="HTTP/1.1 200 OK\r\n\r\nWelcome admin",
+            ),
+            description="Confirmed via manual testing.",
+        )
+        store.save_validated(f)
+        assert f.id is not None
+        loaded = store.load(f.id)
+        assert loaded.title == "SQL Injection in /login"
+
+    def test_save_plain_still_works_without_gate(self, store):
+        """save() (plain) must still work for internal use without gate."""
+        f = Finding(title="Internal", vuln_class="sqli", target="https://x.com")
+        store.save(f)
+        assert f.id is not None
+
+    def test_validation_failed_has_reasons(self, store):
+        """ValidationFailed exception must contain failure reasons."""
+        from shadow.core.store import ValidationFailed
+        f = Finding(title="X", vuln_class="sqli", target="https://x.com")
+        try:
+            store.save_validated(f)
+            assert False, "Should have raised"
+        except ValidationFailed as e:
+            assert len(e.reasons) > 0
+            assert isinstance(e.reasons[0], str)

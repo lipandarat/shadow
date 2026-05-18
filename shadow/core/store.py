@@ -4,7 +4,15 @@ import os
 import re
 import yaml
 from typing import Optional
-from shadow.core.models import Finding, Evidence, FindingStatus, Severity
+from shadow.core.models import Finding, Evidence, FindingStatus, Severity, Scope
+from shadow.core.validate import ValidationGate
+
+
+class ValidationFailed(Exception):
+    """Raised when a finding fails the 9-question validation gate."""
+    def __init__(self, reasons: list[str]):
+        self.reasons = reasons
+        super().__init__(f"Validation failed: {'; '.join(reasons)}")
 
 
 class FindingStore:
@@ -29,6 +37,20 @@ class FindingStore:
                 allow_unicode=True,
                 sort_keys=False,
             )
+
+    def save_validated(self, finding: Finding, scope: Scope = None) -> None:
+        """Save a finding only if it passes the 9-question validation gate.
+
+        This is the spec-required entry point for agent-generated findings.
+        Use save() only for internal/test use where gate is not needed.
+
+        Raises:
+            ValidationFailed: if any of the 9 gate questions fail.
+        """
+        gate_result = ValidationGate.run(finding, scope)
+        if not gate_result.passed:
+            raise ValidationFailed(gate_result.reasons)
+        self.save(finding)
 
     def load(self, finding_id: str) -> Optional[Finding]:
         """Load a finding by ID."""
