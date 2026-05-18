@@ -146,6 +146,7 @@ class BountyPlatformsMCP(ShadowMCPServer):
     def serve(self) -> None:
         """Start the MCP server via stdio transport."""
         try:
+            import asyncio
             import mcp.server.stdio
             import mcp.types as types
             from mcp.server import Server
@@ -171,7 +172,14 @@ class BountyPlatformsMCP(ShadowMCPServer):
                 result = tool["handler"](**arguments)
                 return [types.TextContent(type="text", text=str(result))]
 
-            import asyncio
-            asyncio.run(mcp.server.stdio.stdio_server(server))
+            async def main():
+                async with mcp.server.stdio.stdio_server() as (read_stream, write_stream):
+                    await server.run(
+                        read_stream,
+                        write_stream,
+                        server.create_initialization_options(),
+                    )
+
+            asyncio.run(main())
         except ImportError:
             print("mcp package not available — install with: pip install mcp", flush=True)
