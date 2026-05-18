@@ -7,14 +7,12 @@ from typing import Optional
 from shadow.oob.collector import OOBCollector, OOBHit
 
 
-class _HitHandler(BaseHTTPRequestHandler):
-    """HTTP request handler that records OOB hits."""
+def _make_handler(collector):
+    """Create a request handler class bound to a specific collector instance."""
 
-    collector_ref = None  # set by SelfHostedCollector before starting
-
-    def do_GET(self):
-        path = self.path.lstrip("/")
-        if self.collector_ref:
+    class HitHandler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            path = self.path.lstrip("/")
             hit = OOBHit(
                 finding_id=path,
                 hit_type="http",
@@ -22,19 +20,21 @@ class _HitHandler(BaseHTTPRequestHandler):
                 raw_data=f"GET {self.path}",
                 canary_url=f"http://127.0.0.1/{path}",
             )
-            self.collector_ref._record_hit(path, hit)
-        self.send_response(200)
-        self.end_headers()
-        self.wfile.write(b"ok")
+            collector._record_hit(path, hit)
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b"ok")
 
-    def log_message(self, format, *args):
-        pass  # suppress default logging
+        def log_message(self, format, *args):
+            pass  # suppress default logging
+
+    return HitHandler
 
 
 class SelfHostedCollector(OOBCollector):
     def __init__(self, engagement_id: str, port: int = 0):
         super().__init__(engagement_id)
-        self.port = port  # 0 = auto-assign
+        self.port = port
         self._hits: dict[str, OOBHit] = {}
         self._server: Optional[HTTPServer] = None
         self._server_thread: Optional[threading.Thread] = None
@@ -50,13 +50,11 @@ class SelfHostedCollector(OOBCollector):
         return self._hits.get(cid) or self._hits.get(finding_id)
 
     def start(self) -> None:
-        _HitHandler.collector_ref = self
-        self._server = HTTPServer(("127.0.0.1", self.port), _HitHandler)
+        handler_class = _make_handler(self)
+        self._server = HTTPServer(("127.0.0.1", self.port), handler_class)
         self._actual_port = self._server.server_address[1]
         super().start()
-        self._server_thread = threading.Thread(
-            target=self._server.serve_forever, daemon=True
-        )
+        self._server_thread = threading.Thread(target=self._server.serve_forever, daemon=True)
         self._server_thread.start()
 
     def stop(self) -> None:
