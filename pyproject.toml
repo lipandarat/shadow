@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=75", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "shadow"
+version = "0.1.0"
+description = "Bug bounty hunting assistant"
+requires-python = ">=3.11"
+dependencies = [
+    "pyyaml>=6.0",
+    "mcp>=1.0",
+    "httpx>=0.28",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-cov>=6"]
+
+[project.scripts]
+shadow = "shadow.cli.main:main"
+
+[tool.setuptools.packages.find]
+include = ["shadow*"]

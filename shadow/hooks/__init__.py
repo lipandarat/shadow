@@ -1,0 +1,1 @@
+"""Shadow hooks module."""
