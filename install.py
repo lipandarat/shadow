@@ -303,12 +303,32 @@ def _run_verify(quiet=False) -> bool:
 
 
 def _write_mcp_settings():
-    settings = _load_claude_settings()
-    if "mcpServers" not in settings:
-        settings["mcpServers"] = {}
+    """Register MCP servers using claude mcp add command (correct way for Claude Code)."""
+    shadow_dir = os.path.dirname(os.path.abspath(__file__))
+
     for name, cfg in MCP_SERVERS.items():
-        settings["mcpServers"][name] = cfg
-    _save_claude_settings(settings)
+        # Remove existing server first (ignore errors if not exists)
+        subprocess.run(
+            ["claude", "mcp", "remove", name],
+            capture_output=True, text=True
+        )
+        # Add server using claude mcp add
+        cmd = [
+            "claude", "mcp", "add",
+            "--transport", "stdio",
+            "--scope", "user",
+            name, "--",
+            cfg["command"],
+        ] + cfg["args"]
+
+        result = subprocess.run(cmd, capture_output=True, text=True, cwd=shadow_dir)
+        if result.returncode != 0:
+            # Fallback: write directly to settings.json
+            settings = _load_claude_settings()
+            if "mcpServers" not in settings:
+                settings["mcpServers"] = {}
+            settings["mcpServers"][name] = cfg
+            _save_claude_settings(settings)
 
 
 def _write_hooks_settings():
