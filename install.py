@@ -18,10 +18,12 @@ MCP_SERVERS = {
     "bounty-platforms": {
         "command": sys.executable,
         "args": ["-m", "shadow.cli.main", "mcp", "serve", "bounty-platforms"],
+        "cwd": os.path.dirname(os.path.abspath(__file__)),
     },
     "writeup-search": {
         "command": sys.executable,
         "args": ["-m", "shadow.cli.main", "mcp", "serve", "writeup-search"],
+        "cwd": os.path.dirname(os.path.abspath(__file__)),
     },
 }
 

@@ -70,8 +70,10 @@ class BountyPlatformsMCP(ShadowMCPServer):
 
     def _sync_program(self, platform: str, slug: str) -> dict:
         try:
-            api_key = self._get_api_key(platform)
-            client = get_platform(platform, api_key=api_key)
+            cfg = self._get_platform_config(platform)
+            api_key = cfg.get("api_key", "")
+            username = cfg.get("username", "")
+            client = get_platform(platform, api_key=api_key, username=username)
             program = client.sync_program(slug)
             return {
                 "success": True,
@@ -89,8 +91,10 @@ class BountyPlatformsMCP(ShadowMCPServer):
 
     def _list_programs(self, platform: str) -> dict:
         try:
-            api_key = self._get_api_key(platform)
-            client = get_platform(platform, api_key=api_key)
+            cfg = self._get_platform_config(platform)
+            api_key = cfg.get("api_key", "")
+            username = cfg.get("username", "")
+            client = get_platform(platform, api_key=api_key, username=username)
             programs = client.list_programs()
             return {
                 "success": True,
@@ -104,8 +108,10 @@ class BountyPlatformsMCP(ShadowMCPServer):
 
     def _get_hacktivity(self, platform: str, slug: str, limit: int = 10) -> dict:
         try:
-            api_key = self._get_api_key(platform)
-            client = get_platform(platform, api_key=api_key)
+            cfg = self._get_platform_config(platform)
+            api_key = cfg.get("api_key", "")
+            username = cfg.get("username", "")
+            client = get_platform(platform, api_key=api_key, username=username)
             entries = client.get_hacktivity(slug, limit=limit)
             return {
                 "success": True,
@@ -135,13 +141,17 @@ class BountyPlatformsMCP(ShadowMCPServer):
         except Exception as e:
             return {"success": False, "error": str(e)}
 
-    def _get_api_key(self, platform: str) -> str:
+    def _get_platform_config(self, platform: str) -> dict:
+        """Return full platform config dict with api_key, username, etc."""
         config_path = os.path.join(os.path.expanduser("~"), ".shadow", "config.yaml")
         if os.path.exists(config_path):
             with open(config_path) as f:
                 config = yaml.safe_load(f) or {}
-            return config.get("platforms", {}).get(platform, {}).get("api_key", "")
-        return ""
+            return config.get("platforms", {}).get(platform, {})
+        return {}
+
+    def _get_api_key(self, platform: str) -> str:
+        return self._get_platform_config(platform).get("api_key", "")
 
     def serve(self) -> None:
         """Start the MCP server via stdio transport."""
