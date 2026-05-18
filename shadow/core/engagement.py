@@ -35,6 +35,14 @@ class EngagementManager:
         endpoints_path = os.path.join(workspace_path, "endpoints.jsonl")
         open(endpoints_path, "w").close()
 
+        # Write empty events.jsonl (audit log)
+        events_path = os.path.join(workspace_path, "events.jsonl")
+        open(events_path, "w").close()
+
+        # Write empty session.jsonl (session resume)
+        session_path = os.path.join(workspace_path, "session.jsonl")
+        open(session_path, "w").close()
+
         return Engagement(
             platform=platform,
             program=program,

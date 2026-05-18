@@ -74,3 +74,13 @@ class TestEngagementManager:
         brain_path = os.path.join(eng.workspace_path, "brain.md")
         content = open(brain_path).read()
         assert "tesla" in content
+
+    def test_create_workspace_events_jsonl(self, base_dir):
+        mgr = EngagementManager(base_dir)
+        eng = mgr.create("hackerone", "tesla")
+        assert os.path.isfile(os.path.join(eng.workspace_path, "events.jsonl"))
+
+    def test_create_workspace_session_jsonl(self, base_dir):
+        mgr = EngagementManager(base_dir)
+        eng = mgr.create("hackerone", "tesla")
+        assert os.path.isfile(os.path.join(eng.workspace_path, "session.jsonl"))
