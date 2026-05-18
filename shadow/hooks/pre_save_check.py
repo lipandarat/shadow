@@ -6,7 +6,11 @@ import sys
 
 
 def main():
-    tool_input = json.loads(sys.stdin.read()) if not sys.stdin.isatty() else {}
+    try:
+        raw = sys.stdin.read() if not sys.stdin.isatty() else ""
+        tool_input = json.loads(raw) if raw.strip() else {}
+    except (json.JSONDecodeError, Exception):
+        tool_input = {}
     file_path = tool_input.get("file_path", tool_input.get("path", ""))
 
     if "findings/" not in file_path and "findings\\" not in file_path:

@@ -7,7 +7,11 @@ import yaml
 
 
 def main():
-    tool_input = json.loads(sys.stdin.read()) if not sys.stdin.isatty() else {}
+    try:
+        raw = sys.stdin.read() if not sys.stdin.isatty() else ""
+        tool_input = json.loads(raw) if raw.strip() else {}
+    except (json.JSONDecodeError, Exception):
+        tool_input = {}
     command = tool_input.get("command", "")
 
     if not command:
