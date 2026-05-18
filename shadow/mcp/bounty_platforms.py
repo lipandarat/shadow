@@ -122,6 +122,8 @@ class BountyPlatformsMCP(ShadowMCPServer):
                         "severity": e.severity,
                         "vuln_type": e.vuln_type,
                         "bounty": e.bounty,
+                        "program": e.program,
+                        "disclosed_at": e.disclosed_at,
                     }
                     for e in entries
                 ],
