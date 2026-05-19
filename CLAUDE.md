@@ -12,15 +12,15 @@ Two MCP servers are available:
 
 | Command | Description |
 |---------|-------------|
-| `/new <platform> <program>` | Create engagement workspace |
-| `/sync <platform> <program>` | Sync scope from platform |
-| `/hunt <target> [--vuln-class X]` | Run vulnerability hunt |
-| `/validate <finding_id>` | 9-question validation gate |
-| `/chain <finding_id>` | Build exploit chain |
-| `/report` | Generate draft report |
-| `/dupcheck <finding_id>` | Check for duplicates |
-| `/learn <id> <status> [--bounty N]` | Record platform response |
-| `/oob start\|stop\|check` | Manage OOB listener |
+| `/shadow-new <platform> <program>` | Create engagement workspace |
+| `/shadow-sync <platform> <program>` | Sync scope from platform |
+| `/shadow-hunt <target> [--vuln-class X]` | Run vulnerability hunt |
+| `/shadow-validate <finding_id>` | 9-question validation gate |
+| `/shadow-chain <finding_id>` | Build exploit chain |
+| `/shadow-report` | Generate draft report |
+| `/shadow-dupcheck <finding_id>` | Check for duplicates |
+| `/shadow-learn <id> <status> [--bounty N]` | Record platform response |
+| `/shadow-oob start\|stop\|check` | Manage OOB listener |
 
 ## Validation Gate
 
