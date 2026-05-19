@@ -1,8 +1,8 @@
-# /report — Generate Report
+# /shadow-report — Generate Report
 
 Generates a bug bounty report draft. NEVER auto-submits.
 
-**Usage:** `/report [--format md|yaml]`
+**Usage:** `/shadow-report [--format md|yaml]`
 
 **What it does:**
 1. Loads all validated/reported/accepted findings (skips drafts)

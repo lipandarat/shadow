@@ -1,9 +1,9 @@
-# /validate — Validate Finding
+# /shadow-validate — Validate Finding
 
 Runs the 9-question validation gate on a finding.
 
-**Usage:** `/validate <finding_id>`
-**Example:** `/validate F001`
+**Usage:** `/shadow-validate <finding_id>`
+**Example:** `/shadow-validate F001`
 
 **The 9 questions:**
 1. Reproducible? (has reproduction steps)

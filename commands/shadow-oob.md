@@ -1,8 +1,8 @@
-# /oob — Manage OOB Listener
+# /shadow-oob — Manage OOB Listener
 
 Manages the Out-of-Band detection listener for blind vulnerabilities (blind SQLi, SSRF, XXE, CMDi).
 
-**Usage:** `/oob start|stop|check`
+**Usage:** `/shadow-oob start|stop|check`
 
 **What it does:**
 - `start`: Starts interactsh-client (if available) or local HTTP listener on random port
@@ -22,6 +22,6 @@ Manages the Out-of-Band detection listener for blind vulnerabilities (blind SQLi
 Run `shadow oob <action>`. For `check`:
 - Show all recent hits with timestamp, type (DNS/HTTP), and remote IP
 - Map each hit to its finding ID
-- If a hit is found for a pending finding, remind the user to update the finding's `oob_hit` field and re-run `/validate`
+- If a hit is found for a pending finding, remind the user to update the finding's `oob_hit` field and re-run `/shadow-validate`
 
 For `start`: Show the canary domain/URL format to use in payloads.

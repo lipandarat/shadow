@@ -1,9 +1,9 @@
-# /sync — Sync Scope from Platform
+# /shadow-sync — Sync Scope from Platform
 
 Syncs program scope, policy, and hacktivity from a bug bounty platform.
 
-**Usage:** `/sync <platform> <program>`
-**Example:** `/sync hackerone tesla`
+**Usage:** `/shadow-sync <platform> <program>`
+**Example:** `/shadow-sync hackerone tesla`
 
 **What it does:**
 1. Fetches scope (domains, wildcards, exclusions) via platform API

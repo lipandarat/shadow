@@ -1,9 +1,9 @@
-# /chain — Build Exploit Chain
+# /shadow-chain — Build Exploit Chain
 
 Builds an exploit chain from related findings that share the same target domain.
 
-**Usage:** `/chain <finding_id>`
-**Example:** `/chain F001`
+**Usage:** `/shadow-chain <finding_id>`
+**Example:** `/shadow-chain F001`
 
 **What it does:**
 1. Finds all other validated findings on the same target domain

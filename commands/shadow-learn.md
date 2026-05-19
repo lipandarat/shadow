@@ -1,9 +1,9 @@
-# /learn — Record Platform Response
+# /shadow-learn — Record Platform Response
 
 Records the platform's response to a submitted finding for future learning.
 
-**Usage:** `/learn <finding_id> <status> [--bounty <amount>] [--vuln-type <type>]`
-**Example:** `/learn F001 accepted --bounty 500 --vuln-type sqli`
+**Usage:** `/shadow-learn <finding_id> <status> [--bounty <amount>] [--vuln-type <type>]`
+**Example:** `/shadow-learn F001 accepted --bounty 500 --vuln-type sqli`
 
 **Status values:**
 - `accepted` — finding was accepted and rewarded

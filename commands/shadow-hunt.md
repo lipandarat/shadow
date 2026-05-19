@@ -1,9 +1,9 @@
-# /hunt — Run Vulnerability Hunt
+# /shadow-hunt — Run Vulnerability Hunt
 
 Runs a full vulnerability hunting cycle against a target.
 
-**Usage:** `/hunt <target> [--vuln-class sqli|xss|ssrf|ssti|lfi|rce|idor|xxe|cmdi]`
-**Example:** `/hunt https://example.com --vuln-class sqli`
+**Usage:** `/shadow-hunt <target> [--vuln-class sqli|xss|ssrf|ssti|lfi|rce|idor|xxe|cmdi]`
+**Example:** `/shadow-hunt https://example.com --vuln-class sqli`
 
 **What it does:**
 1. Scope check — stops immediately if target is out of scope

@@ -1,9 +1,9 @@
-# /dupcheck — Check Duplicates
+# /shadow-dupcheck — Check Duplicates
 
 Checks if a finding is a duplicate of existing local findings or platform hacktivity.
 
-**Usage:** `/dupcheck <finding_id>`
-**Example:** `/dupcheck F001`
+**Usage:** `/shadow-dupcheck <finding_id>`
+**Example:** `/shadow-dupcheck F001`
 
 **What it does:**
 1. Computes SHA-256 fingerprint of the finding (target + vuln_class + parameter)
