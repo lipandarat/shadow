@@ -35,14 +35,14 @@ HOOKS = {
             "matcher": "Write|Edit",
             "hooks": [{
                 "type": "command",
-                "command": f"{sys.executable} -m shadow.hooks.pre_save_check",
+                "command": f'"{sys.executable}" -m shadow.hooks.pre_save_check',
             }],
         },
         {
             "matcher": "Bash",
             "hooks": [{
                 "type": "command",
-                "command": f"{sys.executable} -m shadow.hooks.scope_check",
+                "command": f'"{sys.executable}" -m shadow.hooks.scope_check',
             }],
         },
     ]
