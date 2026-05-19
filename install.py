@@ -13,17 +13,19 @@ CLAUDE_SETTINGS_PATH = os.path.join(os.path.expanduser("~"), ".claude", "setting
 CLAUDE_COMMANDS_DIR = os.path.join(os.path.expanduser("~"), ".claude", "commands")
 SHADOW_CONFIG_DIR = os.path.join(os.path.expanduser("~"), ".shadow")
 SHADOW_CONFIG_PATH = os.path.join(SHADOW_CONFIG_DIR, "config.yaml")
+PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+COMMANDS_SRC_DIR = os.path.join(PROJECT_ROOT, "commands")
 
 MCP_SERVERS = {
     "bounty-platforms": {
         "command": sys.executable,
         "args": ["-m", "shadow.cli.main", "mcp", "serve", "bounty-platforms"],
-        "cwd": os.path.dirname(os.path.abspath(__file__)),
+        "cwd": PROJECT_ROOT,
     },
     "writeup-search": {
         "command": sys.executable,
         "args": ["-m", "shadow.cli.main", "mcp", "serve", "writeup-search"],
-        "cwd": os.path.dirname(os.path.abspath(__file__)),
+        "cwd": PROJECT_ROOT,
     },
 }
 
@@ -186,9 +188,8 @@ def cmd_uninstall(args):
 
     # 3. Remove slash commands
     print("  [3/4] Removing slash commands...")
-    commands_src = os.path.join(os.path.dirname(__file__), "claude", "commands")
-    if os.path.isdir(commands_src) and os.path.isdir(CLAUDE_COMMANDS_DIR):
-        for fname in os.listdir(commands_src):
+    if os.path.isdir(COMMANDS_SRC_DIR) and os.path.isdir(CLAUDE_COMMANDS_DIR):
+        for fname in os.listdir(COMMANDS_SRC_DIR):
             target = os.path.join(CLAUDE_COMMANDS_DIR, fname)
             if os.path.exists(target):
                 os.remove(target)
@@ -304,7 +305,7 @@ def _run_verify(quiet=False) -> bool:
 
 def _write_mcp_settings():
     """Register MCP servers using claude mcp add command (correct way for Claude Code)."""
-    shadow_dir = os.path.dirname(os.path.abspath(__file__))
+    shadow_dir = PROJECT_ROOT
 
     for name, cfg in MCP_SERVERS.items():
         # Remove existing server first (ignore errors if not exists)
@@ -339,12 +340,11 @@ def _write_hooks_settings():
 
 def _copy_slash_commands():
     os.makedirs(CLAUDE_COMMANDS_DIR, exist_ok=True)
-    commands_src = os.path.join(os.path.dirname(os.path.abspath(__file__)), "claude", "commands")
-    if os.path.isdir(commands_src):
-        for fname in os.listdir(commands_src):
+    if os.path.isdir(COMMANDS_SRC_DIR):
+        for fname in os.listdir(COMMANDS_SRC_DIR):
             if fname.endswith(".md"):
                 shutil.copy2(
-                    os.path.join(commands_src, fname),
+                    os.path.join(COMMANDS_SRC_DIR, fname),
                     os.path.join(CLAUDE_COMMANDS_DIR, fname)
                 )
 
@@ -352,7 +352,7 @@ def _copy_slash_commands():
     # If file doesn't exist: copy directly
     # If file exists but Shadow block not present: append Shadow block
     # If Shadow block already present: skip (already merged)
-    claude_md_src = os.path.join(os.path.dirname(os.path.abspath(__file__)), "claude", "CLAUDE.md")
+    claude_md_src = os.path.join(PROJECT_ROOT, "claude", "CLAUDE.md")
     claude_md_dst = os.path.join(os.path.expanduser("~"), ".claude", "CLAUDE.md")
     SHADOW_BLOCK_MARKER = "<!-- shadow-assistant managed block -->"
 
