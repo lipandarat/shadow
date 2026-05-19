@@ -2,7 +2,7 @@
 
 Shadow adalah asisten bug bounty berbasis Python yang terintegrasi dengan **Claude Code**. Sistem berperilaku seperti pentester profesional: menjalankan recon, menemukan celah, memvalidasi temuan secara ketat (bukan teori), membangun exploit chain, menulis laporan, dan belajar dari pekerjaan sebelumnya.
 
-**Shadow berjalan di dalam Claude Code** — bukan di terminal langsung. Anda berinteraksi dengan Shadow melalui slash commands (`/new`, `/hunt`, dll) dan Claude Code menggunakan MCP servers serta agen Python di belakang layar.
+**Shadow berjalan di dalam Claude Code** — bukan di terminal langsung. Anda berinteraksi dengan Shadow melalui slash commands (`/shadow-new`, `/shadow-hunt`, dll) dan Claude Code menggunakan MCP servers serta agen Python di belakang layar.
 
 ---
 
@@ -124,7 +124,7 @@ Shadow digunakan **di dalam Claude Code** melalui slash commands. Buka Claude Co
 
 Di Claude Code, ketik:
 ```
-/new hackerone tesla
+/shadow-new hackerone tesla
 ```
 
 Claude Code akan membuat workspace di `~/.shadow/engagements/hackerone-tesla-YYYYMMDD/` berisi:
@@ -138,7 +138,7 @@ Claude Code akan membuat workspace di `~/.shadow/engagements/hackerone-tesla-YYY
 **2. Sync scope dari platform**
 
 ```
-/sync hackerone tesla
+/shadow-sync hackerone tesla
 ```
 
 Mengambil scope, policy, dan hacktivity terbaru dari HackerOne. Membutuhkan API key di config.
@@ -146,7 +146,7 @@ Mengambil scope, policy, dan hacktivity terbaru dari HackerOne. Membutuhkan API 
 **3. Jalankan hunt**
 
 ```
-/hunt https://tesla.com --vuln-class sqli
+/shadow-hunt https://tesla.com --vuln-class sqli
 ```
 
 Claude Code akan:
@@ -165,7 +165,7 @@ Claude Code akan:
 **4. Validasi finding**
 
 ```
-/validate F001
+/shadow-validate F001
 ```
 
 Menjalankan 9-question gate pada finding F001. Menampilkan PASS/FAIL per pertanyaan.
@@ -173,7 +173,7 @@ Menjalankan 9-question gate pada finding F001. Menampilkan PASS/FAIL per pertany
 **5. Build exploit chain**
 
 ```
-/chain F001
+/shadow-chain F001
 ```
 
 Mencari findings lain yang berhubungan dan membangun exploit chain dengan severity gabungan.
@@ -181,7 +181,7 @@ Mencari findings lain yang berhubungan dan membangun exploit chain dengan severi
 **6. Cek duplikat**
 
 ```
-/dupcheck F001
+/shadow-dupcheck F001
 ```
 
 Memeriksa apakah F001 adalah duplikat dari finding lokal atau hacktivity platform.
@@ -189,7 +189,7 @@ Memeriksa apakah F001 adalah duplikat dari finding lokal atau hacktivity platfor
 **7. Generate laporan**
 
 ```
-/report
+/shadow-report
 ```
 
 Menghasilkan laporan Markdown draft. **Tidak pernah auto-submit.** Claude Code akan menampilkan draft untuk review sebelum submission.
@@ -197,7 +197,7 @@ Menghasilkan laporan Markdown draft. **Tidak pernah auto-submit.** Claude Code a
 **8. Catat hasil dari platform**
 
 ```
-/learn F001 accepted --bounty 500 --vuln-type sqli
+/shadow-learn F001 accepted --bounty 500 --vuln-type sqli
 ```
 
 Status yang valid: `accepted`, `duplicate`, `informational`, `not_applicable`
@@ -205,9 +205,9 @@ Status yang valid: `accepted`, `duplicate`, `informational`, `not_applicable`
 **9. Kelola OOB listener**
 
 ```
-/oob start
-/oob check
-/oob stop
+/shadow-oob start
+/shadow-oob check
+/shadow-oob stop
 ```
 
 ---
@@ -218,15 +218,15 @@ Semua slash commands tersedia di Claude Code setelah instalasi:
 
 | Command | Fungsi |
 |---------|--------|
-| `/new <platform> <program>` | Buat engagement workspace baru |
-| `/sync <platform> <program>` | Sync scope dari platform |
-| `/hunt <target> [--vuln-class X]` | Jalankan hunt cycle |
-| `/validate <finding_id>` | Jalankan 9-question gate manual |
-| `/chain <finding_id>` | Build exploit chain |
-| `/report` | Generate laporan draft |
-| `/dupcheck <finding_id>` | Cek duplikat |
-| `/learn <id> <status> [--bounty N]` | Catat hasil platform |
-| `/oob start\|stop\|check` | Kelola OOB listener |
+| `/shadow-new <platform> <program>` | Buat engagement workspace baru |
+| `/shadow-sync <platform> <program>` | Sync scope dari platform |
+| `/shadow-hunt <target> [--vuln-class X]` | Jalankan hunt cycle |
+| `/shadow-validate <finding_id>` | Jalankan 9-question gate manual |
+| `/shadow-chain <finding_id>` | Build exploit chain |
+| `/shadow-report` | Generate laporan draft |
+| `/shadow-dupcheck <finding_id>` | Cek duplikat |
+| `/shadow-learn <id> <status> [--bounty N]` | Catat hasil platform |
+| `/shadow-oob start\|stop\|check` | Kelola OOB listener |
 
 ---
 
